@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu en JavaScript</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            border: 2px solid #000;
+            background-image: url(Background/Tatami_galaxy.jpeg);
+        }
+
+        #instructions {
+            margin-bottom: 10px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        #gameOverVideo {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="instructions">
+        <p><strong>Instructions :</strong></p>
+        <p>Utilisez les flèches directionnelles pour déplacer votre personnage.</p>
+        <p>Appuyez sur la barre d'espace pour attaquer les ennemis.</p>
+        <p>Évitez les ennemis ou éliminez-les pour survivre.</p>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <video id="gameOverVideo" width="800" height="600" style="display: none;">
+            <source src="YOU DIED (HD) (1).mp4" type="video/mp4">
+        </video>
+
+    </div>
+    <!-- Le canvas est créé et manipulé directement par le script -->
+    <script src="main.js"></script>
+</body>
+
+</html>
