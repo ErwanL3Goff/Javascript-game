@@ -3,6 +3,8 @@ const WIDTH = 800;
 const HEIGHT = 600;
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+canvas.width = WIDTH;
+canvas.height = HEIGHT;
 
 // Position et taille du personnage
 const playerSize = 50;
@@ -13,15 +15,11 @@ const playerSpeed = 5;
 // Configuration des ennemis
 const enemySize = 50;
 const maxEnemies = 10;
-const enemies = [
-  { x: 100, y: 100, speedX: 3, speedY: 2, direction: 'right', frame: 0 },
-  { x: 300, y: 200, speedX: -2, speedY: 3, direction: 'left', frame: 0 },
-  { x: 500, y: 400, speedX: 4, speedY: -3, direction: 'right', frame: 0 },
-];
+const enemies = [];
 
 // Attaque
 let isAttacking = false;
-const attackRange = 80  ;
+const attackRange = 80;
 let stamina = 100;
 const maxStamina = 100;
 const staminaCost = 25;
@@ -94,50 +92,47 @@ function addEnemy() {
     const y = Math.random() * (HEIGHT - enemySize);  // Position aléatoire en Y
     const speedX = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1);  // Vitesse en X aléatoire
     const speedY = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1);  // Vitesse en Y aléatoire
-    enemies.push({ x, y, speedX, speedY, direction: 'right', frame: 0, createdAt: Date.now() });
+    enemies.push({ x, y, speedX, speedY, direction: 'right', frame: 0 });
   }
 }
 
 // Fonction pour gérer l'élimination d'un ennemi
 function handleEnemyElimination(index) {
-  // Enlever l'ennemi de la liste
   enemies.splice(index, 1);
 
-  // Ajouter un nouvel ennemi après 10 secondes
-  setTimeout(() => {
-    addEnemy();  // Ajouter un nouvel ennemi
-  }, 10000);  // 10 secondes
+  const enemySpawnInterval = setInterval(() => {
+    if (enemies.length < maxEnemies) {
+      addEnemy(); // Ajouter un nouvel ennemi
+    } else {
+      clearInterval(enemySpawnInterval); // Arrêter le spawn si le maximum est atteint
+    }
+  }, 2000); // Intervalle de 2 secondes
 }
 
 // Fonction pour afficher la vidéo de fin de jeu
 function showGameOver() {
-  // Masquer le canevas de jeu
-  canvas.style.display = "none";
-  
-  // Afficher la vidéo de fin de jeu
+  canvas.style.display = "none";  // Masquer le canevas
   const video = document.getElementById("gameOverVideo");
   video.style.display = "block";
-  video.play();  // Lancer la vidéo
+  video.play();
 }
 
 // Boucle de jeu
 function gameLoop() {
-  // Déplacements du joueur
   if (keys.ArrowUp) playerY -= playerSpeed;
   if (keys.ArrowDown) playerY += playerSpeed;
   if (keys.ArrowLeft) playerX -= playerSpeed;
   if (keys.ArrowRight) playerX += playerSpeed;
 
-  // Limiter le joueur dans les bordures
+  // Limiter le joueur aux bordures de l'écran
   playerX = Math.max(0, Math.min(WIDTH - playerSize, playerX));
   playerY = Math.max(0, Math.min(HEIGHT - playerSize, playerY));
 
-  // Mise à jour de la direction des ennemis et gestion des animations
+  // Déplacement des ennemis
   for (let enemy of enemies) {
     enemy.x += enemy.speedX;
     enemy.y += enemy.speedY;
 
-    // Si l'ennemi atteint les bords, il change de direction
     if (enemy.x <= 0 || enemy.x + enemySize >= WIDTH) {
       enemy.speedX *= -1;
       enemy.direction = (enemy.speedX > 0) ? 'right' : 'left';
@@ -146,12 +141,9 @@ function gameLoop() {
     if (enemy.y <= 0 || enemy.y + enemySize >= HEIGHT) {
       enemy.speedY *= -1;
     }
-
-    // Animation de déplacement (alterner entre 2 sprites)
-    enemy.frame = (enemy.frame + 1) % 2;  // Alterne entre 0 et 1
   }
 
-  // Gestion des attaques
+  // Attaques
   if (isAttacking) {
     for (let i = enemies.length - 1; i >= 0; i--) {
       const enemy = enemies[i];
@@ -160,34 +152,22 @@ function gameLoop() {
         enemy.y + enemySize / 2 - (playerY + playerSize / 2)
       );
       if (distance <= attackRange) {
-        enemies.splice(i, 1 ); // Supprimer l'ennemi
+        handleEnemyElimination(i);
       }
     }
-    isAttacking = false; // Attaque terminée
+    isAttacking = false;
   }
 
   // Affichage
   ctx.clearRect(0, 0, WIDTH, HEIGHT);
-
-  // Affichage du joueur avec l'image correspondant à son état
   ctx.drawImage(playerImages[playerState], playerX, playerY, playerSize, playerSize);
 
-  // Affichage des ennemis avec animation de déplacement
   for (let enemy of enemies) {
-    // Alterner les sprites des ennemis en fonction de leur direction
     const enemyImageToDraw = (enemy.direction === 'right') ? enemyImages.right : enemyImages.left;
     ctx.drawImage(enemyImageToDraw, enemy.x, enemy.y, enemySize, enemySize);
   }
 
-  // Affichage de la barre de stamina
-  const barWidth = 200, barHeight = 20, barX = WIDTH - barWidth - 20, barY = 20;
-  ctx.fillStyle = "#000"; ctx.fillRect(barX, barY, barWidth, barHeight);
-  const staminaWidth = (stamina / maxStamina) * barWidth;
-  ctx.fillStyle = "#00FF00"; ctx.fillRect(barX, barY, staminaWidth, barHeight);
-  ctx.strokeStyle = "#000"; ctx.strokeRect(barX, barY, barWidth, barHeight);
-
-
-  // Détection des collisions avec les ennemis
+  // Détection de collision joueur-ennemi
   for (let enemy of enemies) {
     if (
       playerX < enemy.x + enemySize &&
@@ -200,7 +180,10 @@ function gameLoop() {
     }
   }
 
+  // Boucle infinie
   requestAnimationFrame(gameLoop);
 }
 
+// Initialisation
+addEnemy();
 gameLoop();
